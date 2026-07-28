@@ -171,10 +171,6 @@ const BALL_RADIUS = 16;
 const GRAVITY = 0.45;
 const FLAP_STR = -7.5;
 const HOOP_SPACING = 280;
-const GAP_BASE = 145;
-const GAP_MIN = 95;
-const RIM_W = 10;
-const RIM_CHECK_DIST = 14;
 
 const BALL_STYLES=[
   {name:'Classic',colors:['#f57c00','#e65100']},
@@ -348,33 +344,17 @@ function drawWings(x,y,r,ws,wa){
 }
 
 function drawHoop(h){
-  const x=h.x,topY=h.topY,botY=h.botY,w=h.w;
-  const rimExt=12;
-
-  // Rim top bar
-  const rimG=ctx.createLinearGradient(x,0,x+w,0);
-  rimG.addColorStop(0,'#ff6d00');rimG.addColorStop(0.5,'#ff9100');rimG.addColorStop(1,'#ff6d00');
-  ctx.fillStyle=rimG;
-  ctx.fillRect(x-rimExt,topY-5,w+rimExt*2,RIM_W);
-  ctx.fillStyle='rgba(255,200,100,0.3)';
-  ctx.fillRect(x-rimExt+4,topY-3,w+rimExt*2-8,3);
-
-  // Rim bottom bar
-  ctx.fillStyle=rimG;
-  ctx.fillRect(x-rimExt,botY-5,w+rimExt*2,RIM_W);
-  ctx.fillStyle='rgba(255,200,100,0.3)';
-  ctx.fillRect(x-rimExt+4,botY-3,w+rimExt*2-8,3);
-
-  // Rim side connectors
-  ctx.fillStyle='#ff6d00';
-  ctx.fillRect(x-rimExt-2,topY+3,6,botY-topY-6);
-  ctx.fillRect(x+w+rimExt-4,topY+3,6,botY-topY-6);
-
-  // Rim glow
-  const glow=ctx.createRadialGradient(x+w*0.5,(topY+botY)*0.5,0,x+w*0.5,(topY+botY)*0.5,w*0.8);
-  glow.addColorStop(0,'rgba(255,150,0,0.06)');glow.addColorStop(1,'rgba(255,150,0,0)');
-  ctx.fillStyle=glow;
-  ctx.fillRect(x-30,topY-15,w+60,botY-topY+30);
+  const x=h.x,cy=h.cy,r=h.r;
+  ctx.save();
+  ctx.beginPath();ctx.arc(x,cy,r,0,Math.PI*2);
+  ctx.strokeStyle='#ff6d00';ctx.lineWidth=4;
+  ctx.shadowColor='rgba(255,150,0,0.4)';ctx.shadowBlur=12;
+  ctx.stroke();
+  ctx.shadowBlur=0;
+  ctx.beginPath();ctx.arc(x,cy,r*0.85,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,200,100,0.15)';ctx.lineWidth=2;
+  ctx.stroke();
+  ctx.restore();
 }
 
 function roundRect(ctx,x,y,w,h,r){
@@ -431,12 +411,10 @@ function drawParticles(){
 
 // ===== HOOPS =====
 function spawnHoop(){
-  const gap=Math.max(GAP_MIN,GAP_BASE-difficulty*3);
-  const maxTop=canvasH*0.75-gap,minTop=canvasH*0.04;
-  const topY=Math.random()*(maxTop-minTop)+minTop;
-  const botY=topY+gap;
-  const w=64*scale;
-  hoops.push({x:canvasW+20,topY,botY,w,scored:false});
+  const r=34*scale;
+  const minCy=r+10,maxCy=canvasH-r-10;
+  const cy=Math.random()*(maxCy-minCy)+minCy;
+  hoops.push({x:canvasW+20,cy,r,scored:false});
 }
 
 function updateHoops(){
@@ -446,35 +424,31 @@ function updateHoops(){
     h.x-=speed;
 
     if(!gameOver&&!h.scored){
-      const bx=ball.x,by=ball.y,r=ball.radius;
+      const bx=ball.x,by=ball.y;
+      const dy=Math.abs(by-h.cy);
 
-      if(bx+r>h.x-6&&bx-r<h.x+h.w+6){
-        if(by-r<=h.topY+RIM_W){
-          gameOver=true;spawnParticles(ball.x,ball.y,'#ff6b6b',25);
-          return;
-        }
-        if(by+r>=h.botY-RIM_W){
-          gameOver=true;spawnParticles(ball.x,ball.y,'#ff6b6b',25);
-          return;
-        }
-      }
-
-      if(bx>h.x+h.w*0.5&&!h.scored&&bx<h.x+h.w+10&&by>h.topY+RIM_W&&by<h.botY-RIM_W){
+      // Score: ball passes through the circle
+      if(Math.abs(bx-h.x)<10&&dy<h.r*0.7){
         h.scored=true;
-        const distTop=Math.abs(by-h.topY),distBot=Math.abs(by-h.botY);
-        const rimTouch=distTop<RIM_CHECK_DIST||distBot<RIM_CHECK_DIST;
+        const rimTouch=dy>h.r*0.35;
         const pts=rimTouch?1:2;
         score+=pts;
         document.getElementById('scoreDisplay').textContent=score;
         if(score>highScore){highScore=score;localStorage.setItem('fdHS',highScore);document.getElementById('hsLabel').textContent='Best: '+highScore;}
-        if(rimTouch){spawnPopup('+1',bx,h.topY-20,'#ff6b6b');spawnParticles(bx,(h.topY+h.botY)/2,'#ff6b6b',12);}
-        else{spawnPopup('SWISH! +2',bx,h.topY-20,'#ffd700');spawnParticles(bx,(h.topY+h.botY)/2,'#ffd700',20);}
+        if(rimTouch){spawnPopup('+1',bx,h.cy-h.r-10,'#ff6b6b');spawnParticles(bx,h.cy,'#ff6b6b',12);}
+        else{spawnPopup('SWISH! +2',bx,h.cy-h.r-10,'#ffd700');spawnParticles(bx,h.cy,'#ffd700',20);}
         const streak=Math.floor(score/5);
         difficulty=streak;
       }
+
+      // Miss: hoop passed the ball without scoring
+      if(h.x+h.r<ball.x-ball.radius){
+        gameOver=true;
+        return;
+      }
     }
 
-    if(h.x<-100)hoops.splice(i,1);
+    if(h.x<-canvasW)hoops.splice(i,1);
   }
 
   if(hoops.length===0||hoops[hoops.length-1].x<canvasW-HOOP_SPACING*scale/480*canvasW){
@@ -494,7 +468,10 @@ function update(){
     ball.y=canvasH-ball.radius;gameOver=true;spawnParticles(ball.x,ball.y,'#ff6b6b',20);
     return;
   }
-  if(ball.y-ball.radius<0){ball.y=ball.radius;ball.vy=0;}
+  if(ball.y-ball.radius<0){
+    gameOver=true;spawnParticles(ball.x,0,'#ff6b6b',15);
+    return;
+  }
 
   updateHoops();
   updateParticles();
