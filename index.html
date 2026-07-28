@@ -426,13 +426,14 @@ function updateHoops(){
     h.x-=speed;
 
     if(!gameOver&&!h.scored){
-      const bx=ball.x,by=ball.y;
+      const bx=ball.x,by=ball.y,r=ball.radius;
       const dx=Math.abs(bx-h.x),dy=Math.abs(by-h.cy);
+      const innerR=h.r*0.65,innerRy=h.ry*0.65;
 
-      // Score: ball passes through the ellipse
-      if(dx<15&&(dx/h.r)**2+(dy/h.ry)**2<1){
+      // Score: ball center within the inner opening
+      if(dx<15&&(dx/innerR)**2+(dy/innerRy)**2<1){
         h.scored=true;
-        const rimTouch=(dx/h.r)**2+(dy/h.ry)**2>0.45;
+        const rimTouch=(dx/innerR)**2+(dy/innerRy)**2>0.45;
         const pts=rimTouch?1:2;
         score+=pts;
         document.getElementById('scoreDisplay').textContent=score;
@@ -443,8 +444,18 @@ function updateHoops(){
         difficulty=streak;
       }
 
+      // Bounce: ball hits the solid ring material
+      const inOuter=(dx/(h.r+r))**2+(dy/(h.ry+r))**2<1;
+      const inInner=(dx/(innerR-r))**2+(dy/(innerRy-r))**2<1;
+      if(inOuter&&!inInner){
+        const side=by<h.cy?-1:1;
+        ball.y=h.cy+side*(innerRy+r+1);
+        ball.vy*=-0.4;
+        spawnParticles(bx,h.cy+side*h.ry,'#ff6d00',4);
+      }
+
       // Miss: hoop passed the ball without scoring
-      if(h.x+h.r<ball.x-ball.radius){
+      if(h.x+h.r<ball.x-r&&!h.scored){
         gameOver=true;
         return;
       }
