@@ -353,7 +353,7 @@ function drawHoop(h){
 
   ctx.beginPath();
   ctx.ellipse(x,cy,rx,ry,0,0,Math.PI*2);
-  ctx.ellipse(x,cy,rx*0.65,ry*0.65,0,0,Math.PI*2,true);
+  ctx.ellipse(x,cy,rx*0.8,ry*0.8,0,0,Math.PI*2,true);
   ctx.fillStyle='#ff6d00';
   ctx.shadowColor='rgba(255,150,0,0.4)';ctx.shadowBlur=14;
   ctx.fill();
@@ -434,30 +434,29 @@ function updateHoops(){
     if(!gameOver&&!h.scored){
       const bx=ball.x,by=ball.y,r=ball.radius;
       const dx=Math.abs(bx-h.x),dy=Math.abs(by-h.cy);
-      const innerR=h.r*0.65,innerRy=h.ry*0.65;
+      const innerR=h.r*0.8,innerRy=h.ry*0.8;
 
-      // Score: ball center within the inner opening
-      if(dx<15&&(dx/innerR)**2+(dy/innerRy)**2<1){
-        h.scored=true;
-        const rimTouch=(dx/innerR)**2+(dy/innerRy)**2>0.45;
-        const pts=rimTouch?1:2;
-        score+=pts;
-        document.getElementById('scoreDisplay').textContent=score;
-        if(score>highScore){highScore=score;localStorage.setItem('fdHS',highScore);document.getElementById('hsLabel').textContent='Best: '+highScore;}
-        if(rimTouch){spawnPopup('+1',bx,h.cy-h.ry-15,'#ff6b6b');spawnParticles(bx,h.cy,'#ff6b6b',12);}
-        else{spawnPopup('SWISH! +2',bx,h.cy-h.ry-15,'#ffd700');spawnParticles(bx,h.cy,'#ffd700',20);}
-        const streak=Math.floor(score/5);
-        difficulty=streak;
-      }
+      if(dx<15){
+        const inOpening=(dx/innerR)**2+(dy/innerRy)**2<1;
+        const inRing=(dx/h.r)**2+(dy/h.ry)**2<1&&(dx/(innerR-r*0.4))**2+(dy/(innerRy-r*0.4))**2>=1;
 
-      // Bounce: ball hits the solid ring material
-      const inOuter=(dx/(h.r+r))**2+(dy/(h.ry+r))**2<1;
-      const inInner=(dx/(innerR-r))**2+(dy/(innerRy-r))**2<1;
-      if(inOuter&&!inInner){
-        const side=by<h.cy?-1:1;
-        ball.y=h.cy+side*(innerRy+r+1);
-        ball.vy*=-0.4;
-        spawnParticles(bx,h.cy+side*h.ry,'#ff6d00',4);
+        if(inOpening){
+          h.scored=true;
+          const rimTouch=(dx/innerR)**2+(dy/innerRy)**2>0.45;
+          const pts=rimTouch?1:2;
+          score+=pts;
+          document.getElementById('scoreDisplay').textContent=score;
+          if(score>highScore){highScore=score;localStorage.setItem('fdHS',highScore);document.getElementById('hsLabel').textContent='Best: '+highScore;}
+          if(rimTouch){spawnPopup('+1',bx,h.cy-h.ry-15,'#ff6b6b');spawnParticles(bx,h.cy,'#ff6b6b',12);}
+          else{spawnPopup('SWISH! +2',bx,h.cy-h.ry-15,'#ffd700');spawnParticles(bx,h.cy,'#ffd700',20);}
+          const streak=Math.floor(score/5);
+          difficulty=streak;
+        }else if(inRing){
+          const side=by<h.cy?-1:1;
+          ball.y=h.cy+side*(innerRy+r);
+          ball.vy*=-0.5;
+          spawnParticles(bx,h.cy+side*h.ry,'#ff6d00',4);
+        }
       }
 
       // Miss: hoop passed the ball without scoring
