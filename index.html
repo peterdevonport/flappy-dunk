@@ -370,28 +370,6 @@ function drawHoop(h){
   ctx.fillRect(x-rimExt-2,topY+3,6,botY-topY-6);
   ctx.fillRect(x+w+rimExt-4,topY+3,6,botY-topY-6);
 
-  // Net hanging from rim
-  ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=1;
-  const netLen=Math.min(botY-topY+40,80),segs=7;
-  for(let i=0;i<=segs;i++){
-    const nx=x-4+(i/segs)*(w+8);
-    ctx.beginPath();ctx.moveTo(nx,botY+2);
-    for(let j=0;j<=4;j++){
-      const t=j/4,ny=botY+2+t*netLen,mx=nx+Math.sin(frame*0.025+i*0.5+j*0.7)*3*(1-t*0.5);
-      ctx.lineTo(mx,ny);
-    }
-    ctx.stroke();
-  }
-  for(let j=1;j<=3;j++){
-    const ny=botY+2+(j/4)*netLen;
-    ctx.beginPath();ctx.moveTo(x-4,ny);
-    for(let i=0;i<=segs;i++){
-      const nx=x-4+(i/segs)*(w+8);
-      ctx.lineTo(nx+Math.sin(frame*0.02+i*0.5+j)*2,ny);
-    }
-    ctx.stroke();
-  }
-
   // Rim glow
   const glow=ctx.createRadialGradient(x+w*0.5,(topY+botY)*0.5,0,x+w*0.5,(topY+botY)*0.5,w*0.8);
   glow.addColorStop(0,'rgba(255,150,0,0.06)');glow.addColorStop(1,'rgba(255,150,0,0)');
