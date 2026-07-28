@@ -349,22 +349,7 @@ function drawWings(x,y,r,ws,wa){
 
 function drawHoop(h){
   const x=h.x,topY=h.topY,botY=h.botY,w=h.w;
-  const rimExt=12,bbH=50;
-
-  // Backboard
-  const bbX=x-2,bbW=w+4;
-  const tg=ctx.createLinearGradient(bbX,topY-bbH,bbX,topY);
-  tg.addColorStop(0,'rgba(210,210,230,0.9)');tg.addColorStop(1,'rgba(240,240,250,0.9)');
-  ctx.fillStyle=tg;
-  roundRect(ctx,bbX,topY-bbH,bbW,bbH,3);
-  ctx.fill();
-  ctx.strokeStyle='rgba(200,50,50,0.2)';ctx.lineWidth=1.5;
-  const sqH=Math.min(bbH-8,42);
-  ctx.strokeRect(x+8,topY-sqH-6,w-16,sqH);
-
-  // Pole connecting backboard to rim
-  ctx.fillStyle='rgba(180,180,200,0.8)';
-  ctx.fillRect(x+w*0.5-3,topY-bbH-8,6,8);
+  const rimExt=12;
 
   // Rim top bar
   const rimG=ctx.createLinearGradient(x,0,x+w,0);
@@ -469,10 +454,10 @@ function drawParticles(){
 // ===== HOOPS =====
 function spawnHoop(){
   const gap=Math.max(GAP_MIN,GAP_BASE-difficulty*3);
-  const maxTop=canvasH*0.65-gap,minTop=canvasH*0.08;
+  const maxTop=canvasH*0.75-gap,minTop=canvasH*0.04;
   const topY=Math.random()*(maxTop-minTop)+minTop;
   const botY=topY+gap;
-  const w=60*scale;
+  const w=64*scale;
   hoops.push({x:canvasW+20,topY,botY,w,scored:false});
 }
 
@@ -485,13 +470,17 @@ function updateHoops(){
     if(!gameOver&&!h.scored){
       const bx=ball.x,by=ball.y,r=ball.radius;
 
-      // Hit backboard above rim -> die
-      if(bx+r>h.x-6&&bx-r<h.x+h.w+6&&by+r>h.topY-50&&by-r<h.topY){
-        gameOver=true;spawnParticles(ball.x,ball.y,'#ff6b6b',25);
-        return;
+      if(bx+r>h.x-6&&bx-r<h.x+h.w+6){
+        if(by-r<=h.topY+RIM_W){
+          gameOver=true;spawnParticles(ball.x,ball.y,'#ff6b6b',25);
+          return;
+        }
+        if(by+r>=h.botY-RIM_W){
+          gameOver=true;spawnParticles(ball.x,ball.y,'#ff6b6b',25);
+          return;
+        }
       }
 
-      // Score: pass cleanly through the rim opening (ball must be mostly inside)
       if(bx>h.x+h.w*0.5&&!h.scored&&bx<h.x+h.w+10&&by>h.topY+RIM_W&&by<h.botY-RIM_W){
         h.scored=true;
         const distTop=Math.abs(by-h.topY),distBot=Math.abs(by-h.botY);
