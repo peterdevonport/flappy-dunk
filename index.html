@@ -349,20 +349,22 @@ function drawWings(x,y,r,ws,wa){
 
 function drawHoop(h){
   const x=h.x,topY=h.topY,botY=h.botY,w=h.w;
-  const rimExt=12;
+  const rimExt=12,bbH=50;
 
-  // Top pipe (backboard)
-  const tg=ctx.createLinearGradient(x,0,x+w,0);
-  tg.addColorStop(0,'rgba(210,210,230,0.95)');tg.addColorStop(0.3,'rgba(240,240,250,0.95)');
-  tg.addColorStop(0.7,'rgba(230,230,245,0.95)');tg.addColorStop(1,'rgba(200,200,220,0.95)');
+  // Backboard
+  const bbX=x-2,bbW=w+4;
+  const tg=ctx.createLinearGradient(bbX,topY-bbH,bbX,topY);
+  tg.addColorStop(0,'rgba(210,210,230,0.9)');tg.addColorStop(1,'rgba(240,240,250,0.9)');
   ctx.fillStyle=tg;
-  roundRect(ctx,x-6,0,w+12,topY,4);
+  roundRect(ctx,bbX,topY-bbH,bbW,bbH,3);
   ctx.fill();
+  ctx.strokeStyle='rgba(200,50,50,0.2)';ctx.lineWidth=1.5;
+  const sqH=Math.min(bbH-8,42);
+  ctx.strokeRect(x+8,topY-sqH-6,w-16,sqH);
 
-  // Backboard inner square
-  ctx.strokeStyle='rgba(200,50,50,0.25)';ctx.lineWidth=1.5;
-  const sqH=Math.min(topY-20,55);
-  ctx.strokeRect(x+10,topY-sqH-8,w-20,sqH);
+  // Pole connecting backboard to rim
+  ctx.fillStyle='rgba(180,180,200,0.8)';
+  ctx.fillRect(x+w*0.5-3,topY-bbH-8,6,8);
 
   // Rim top bar
   const rimG=ctx.createLinearGradient(x,0,x+w,0);
@@ -383,24 +385,20 @@ function drawHoop(h){
   ctx.fillRect(x-rimExt-2,topY+3,6,botY-topY-6);
   ctx.fillRect(x+w+rimExt-4,topY+3,6,botY-topY-6);
 
-  // Bottom pipe (pole area)
-  const pg=ctx.createLinearGradient(x,0,x+w,0);
-  pg.addColorStop(0,'rgba(40,40,60,0.9)');pg.addColorStop(0.5,'rgba(60,60,85,0.9)');pg.addColorStop(1,'rgba(40,40,60,0.9)');
-  ctx.fillStyle=pg;
-  roundRect(ctx,x-6,botY,w+12,canvasH-botY,4);
-  ctx.fill();
-
-  // Net lines on bottom pipe
-  ctx.strokeStyle='rgba(255,255,255,0.12)';ctx.lineWidth=0.8;
-  const segs=6;
+  // Net hanging from rim
+  ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=1;
+  const netLen=Math.min(botY-topY+40,80),segs=7;
   for(let i=0;i<=segs;i++){
     const nx=x-4+(i/segs)*(w+8);
-    ctx.beginPath();ctx.moveTo(nx,botY);
-    ctx.quadraticCurveTo(nx+Math.sin(frame*0.02+i*0.5)*2,(botY+canvasH)*0.5,nx+Math.sin(frame*0.03+i*0.7)*4,canvasH);
+    ctx.beginPath();ctx.moveTo(nx,botY+2);
+    for(let j=0;j<=4;j++){
+      const t=j/4,ny=botY+2+t*netLen,mx=nx+Math.sin(frame*0.025+i*0.5+j*0.7)*3*(1-t*0.5);
+      ctx.lineTo(mx,ny);
+    }
     ctx.stroke();
   }
   for(let j=1;j<=3;j++){
-    const ny=botY+(canvasH-botY)*(j/4);
+    const ny=botY+2+(j/4)*netLen;
     ctx.beginPath();ctx.moveTo(x-4,ny);
     for(let i=0;i<=segs;i++){
       const nx=x-4+(i/segs)*(w+8);
@@ -471,7 +469,7 @@ function drawParticles(){
 // ===== HOOPS =====
 function spawnHoop(){
   const gap=Math.max(GAP_MIN,GAP_BASE-difficulty*3);
-  const maxTop=canvasH*0.55-gap*0.5,minTop=canvasH*0.06;
+  const maxTop=canvasH*0.65-gap,minTop=canvasH*0.08;
   const topY=Math.random()*(maxTop-minTop)+minTop;
   const botY=topY+gap;
   const w=60*scale;
@@ -487,17 +485,13 @@ function updateHoops(){
     if(!gameOver&&!h.scored){
       const bx=ball.x,by=ball.y,r=ball.radius;
 
-      if(bx+r>h.x-6&&bx-r<h.x+h.w+6){
-        if(by-r<=h.topY+RIM_W){
-          gameOver=true;spawnParticles(ball.x,ball.y,'#ff6b6b',25);
-          return;
-        }
-        if(by+r>=h.botY-RIM_W){
-          gameOver=true;spawnParticles(ball.x,ball.y,'#ff6b6b',25);
-          return;
-        }
+      // Hit backboard above rim -> die
+      if(bx+r>h.x-6&&bx-r<h.x+h.w+6&&by+r>h.topY-50&&by-r<h.topY){
+        gameOver=true;spawnParticles(ball.x,ball.y,'#ff6b6b',25);
+        return;
       }
 
+      // Score: pass cleanly through the rim opening (ball must be mostly inside)
       if(bx>h.x+h.w*0.5&&!h.scored&&bx<h.x+h.w+10&&by>h.topY+RIM_W&&by<h.botY-RIM_W){
         h.scored=true;
         const distTop=Math.abs(by-h.topY),distBot=Math.abs(by-h.botY);
