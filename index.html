@@ -436,10 +436,8 @@ function updateHoops(){
       const dx=Math.abs(bx-h.x),dy=Math.abs(by-h.cy);
       const innerR=h.r*0.8,innerRy=h.ry*0.8;
 
-      if(dx<15){
+      if(dx<innerR){
         const inOpening=(dx/innerR)**2+(dy/innerRy)**2<1;
-        const inRing=(dx/h.r)**2+(dy/h.ry)**2<1&&(dx/(innerR-r*0.4))**2+(dy/(innerRy-r*0.4))**2>=1;
-
         if(inOpening){
           h.scored=true;
           const rimTouch=(dx/innerR)**2+(dy/innerRy)**2>0.45;
@@ -451,12 +449,6 @@ function updateHoops(){
           else{spawnPopup('SWISH! +2',bx,h.cy-h.ry-15,'#ffd700');spawnParticles(bx,h.cy,'#ffd700',20);}
           const streak=Math.floor(score/5);
           difficulty=streak;
-        }else if(inRing&&!h.scored){
-          h.scored=true;
-          const side=by<h.cy?-1:1;
-          ball.y=h.cy+side*(h.ry+r+5);
-          ball.vy=-Math.abs(ball.vy)*0.7;
-          spawnParticles(bx,h.cy+side*h.ry,'#ff6d00',6);
         }
       }
 
