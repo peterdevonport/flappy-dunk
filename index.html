@@ -346,14 +346,51 @@ function drawWings(x,y,r,ws,wa){
 function drawHoop(h){
   const x=h.x,cy=h.cy,r=h.r;
   ctx.save();
-  ctx.beginPath();ctx.arc(x,cy,r,0,Math.PI*2);
-  ctx.strokeStyle='#ff6d00';ctx.lineWidth=4;
-  ctx.shadowColor='rgba(255,150,0,0.4)';ctx.shadowBlur=12;
+  const rx=r,ry=r*0.35;
+
+  // Backboard
+  const bbX=x-r*1.1,bbW=r*2.2,bbH=r*0.9;
+  ctx.fillStyle='rgba(210,210,230,0.25)';
+  roundRect(ctx,bbX,cy-bbH*0.5,bbW,bbH,3);
+  ctx.fill();
+  ctx.strokeStyle='rgba(200,50,50,0.15)';ctx.lineWidth=1.5;
+  ctx.strokeRect(x-r*0.7,cy-bbH*0.4,r*1.4,bbH*0.7);
+
+  // Pole to backboard
+  ctx.fillStyle='rgba(180,180,200,0.4)';
+  ctx.fillRect(x-3,cy-bbH*0.5-12,6,12);
+
+  // Rim ellipse (side view)
+  ctx.beginPath();ctx.ellipse(x,cy,rx,ry,0,0,Math.PI*2);
+  ctx.strokeStyle='#ff6d00';ctx.lineWidth=5;
+  ctx.shadowColor='rgba(255,150,0,0.4)';ctx.shadowBlur=14;
   ctx.stroke();
   ctx.shadowBlur=0;
-  ctx.beginPath();ctx.arc(x,cy,r*0.85,0,Math.PI*2);
-  ctx.strokeStyle='rgba(255,200,100,0.15)';ctx.lineWidth=2;
+
+  // Inner rim highlight
+  ctx.beginPath();ctx.ellipse(x,cy,rx*0.88,ry*0.88,0,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,200,100,0.2)';ctx.lineWidth=2;
   ctx.stroke();
+
+  // Net strands hanging from bottom of rim
+  ctx.strokeStyle='rgba(255,255,255,0.12)';ctx.lineWidth=1.2;
+  const strands=9;
+  for(let i=0;i<strands;i++){
+    const t=i/(strands-1),angle=-0.8+t*1.6;
+    const sx=x+rx*Math.cos(angle-Math.PI*0.5-Math.PI),sy=cy+ry*Math.sin(angle-Math.PI*0.5-Math.PI);
+    ctx.beginPath();ctx.moveTo(sx,sy);
+    for(let j=0;j<=3;j++){
+      const f=j/3,nx=sx+Math.sin(frame*0.03+i+j)*3*(1-f),ny=sy+12+f*28;
+      ctx.lineTo(nx,ny);
+    }
+    ctx.stroke();
+  }
+
+  // Rim glow
+  const glow=ctx.createRadialGradient(x,cy,0,x,cy,rx*0.6);
+  glow.addColorStop(0,'rgba(255,150,0,0.08)');glow.addColorStop(1,'rgba(255,150,0,0)');
+  ctx.fillStyle=glow;
+  ctx.beginPath();ctx.ellipse(x,cy,rx,ry,0,0,Math.PI*2);ctx.fill();
   ctx.restore();
 }
 
@@ -411,10 +448,11 @@ function drawParticles(){
 
 // ===== HOOPS =====
 function spawnHoop(){
-  const r=34*scale;
-  const minCy=r+10,maxCy=canvasH-r-10;
+  const r=65*scale;
+  const ry=r*0.35;
+  const minCy=ry+20,maxCy=canvasH-ry-20;
   const cy=Math.random()*(maxCy-minCy)+minCy;
-  hoops.push({x:canvasW+20,cy,r,scored:false});
+  hoops.push({x:canvasW+20,cy,r,ry,scored:false});
 }
 
 function updateHoops(){
@@ -425,18 +463,18 @@ function updateHoops(){
 
     if(!gameOver&&!h.scored){
       const bx=ball.x,by=ball.y;
-      const dy=Math.abs(by-h.cy);
+      const dx=Math.abs(bx-h.x),dy=Math.abs(by-h.cy);
 
-      // Score: ball passes through the circle
-      if(Math.abs(bx-h.x)<10&&dy<h.r*0.7){
+      // Score: ball passes through the ellipse
+      if(dx<15&&(dx/h.r)**2+(dy/h.ry)**2<1){
         h.scored=true;
-        const rimTouch=dy>h.r*0.35;
+        const rimTouch=(dx/h.r)**2+(dy/h.ry)**2>0.45;
         const pts=rimTouch?1:2;
         score+=pts;
         document.getElementById('scoreDisplay').textContent=score;
         if(score>highScore){highScore=score;localStorage.setItem('fdHS',highScore);document.getElementById('hsLabel').textContent='Best: '+highScore;}
-        if(rimTouch){spawnPopup('+1',bx,h.cy-h.r-10,'#ff6b6b');spawnParticles(bx,h.cy,'#ff6b6b',12);}
-        else{spawnPopup('SWISH! +2',bx,h.cy-h.r-10,'#ffd700');spawnParticles(bx,h.cy,'#ffd700',20);}
+        if(rimTouch){spawnPopup('+1',bx,h.cy-h.ry-15,'#ff6b6b');spawnParticles(bx,h.cy,'#ff6b6b',12);}
+        else{spawnPopup('SWISH! +2',bx,h.cy-h.ry-15,'#ffd700');spawnParticles(bx,h.cy,'#ffd700',20);}
         const streak=Math.floor(score/5);
         difficulty=streak;
       }
