@@ -435,15 +435,14 @@ function updateHoops(){
       const innerR=h.r*0.8,innerRy=h.ry*0.8;
 
       if(dx<innerR){
-        const inOpening=(dx/innerR)**2+(dy/innerRy)**2<1;
-        if(inOpening){
+        const normDist=(dx/innerR)**2+(dy/innerRy)**2;
+        if(normDist<1){
           h.scored=true;
-          const cleanPass=(dx/(innerR-r))**2+(dy/(innerRy-r))**2<1;
-          const pts=cleanPass?2:1;
+          const pts=normDist<0.3?2:1;
           score+=pts;
           document.getElementById('scoreDisplay').textContent=score;
           if(score>highScore){highScore=score;localStorage.setItem('fdHS',highScore);document.getElementById('hsLabel').textContent='Best: '+highScore;}
-          if(cleanPass){spawnPopup('SWISH! +2',bx,h.cy-h.ry-15,'#ffd700');spawnParticles(bx,h.cy,'#ffd700',20);}
+          if(pts>1){spawnPopup('SWISH! +2',bx,h.cy-h.ry-15,'#ffd700');spawnParticles(bx,h.cy,'#ffd700',20);}
           else{spawnPopup('+1',bx,h.cy-h.ry-15,'#ff6b6b');spawnParticles(bx,h.cy,'#ff6b6b',12);}
           const streak=Math.floor(score/5);
           difficulty=streak;
