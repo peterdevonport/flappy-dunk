@@ -451,11 +451,12 @@ function updateHoops(){
           else{spawnPopup('SWISH! +2',bx,h.cy-h.ry-15,'#ffd700');spawnParticles(bx,h.cy,'#ffd700',20);}
           const streak=Math.floor(score/5);
           difficulty=streak;
-        }else if(inRing){
+        }else if(inRing&&!h.scored){
+          h.scored=true;
           const side=by<h.cy?-1:1;
-          ball.y=h.cy+side*(innerRy+r);
-          ball.vy*=-0.5;
-          spawnParticles(bx,h.cy+side*h.ry,'#ff6d00',4);
+          ball.y=h.cy+side*(h.ry+r+5);
+          ball.vy=-Math.abs(ball.vy)*0.7;
+          spawnParticles(bx,h.cy+side*h.ry,'#ff6d00',6);
         }
       }
 
