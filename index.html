@@ -170,7 +170,7 @@ h1 .flappy{color:#fff}
 const BALL_RADIUS = 16;
 const GRAVITY = 0.45;
 const FLAP_STR = -7.5;
-const HOOP_SPACING = 280;
+const HOOP_SPACING = 500;
 
 const BALL_STYLES=[
   {name:'Classic',colors:['#f57c00','#e65100']},
@@ -418,7 +418,7 @@ function spawnHoop(){
 }
 
 function updateHoops(){
-  const speed=HOOP_SPACING/280*2.5*scale+difficulty*0.08;
+  const speed=2.8*scale+difficulty*0.08;
   for(let i=hoops.length-1;i>=0;i--){
     const h=hoops[i];
     h.x-=speed;
