@@ -351,12 +351,10 @@ function drawHoop(h){
   ctx.save();
   const rx=r,ry=r*0.5;
 
-  ctx.beginPath();
-  ctx.ellipse(x,cy,rx,ry,0,0,Math.PI*2);
-  ctx.ellipse(x,cy,rx*0.8,ry*0.8,0,0,Math.PI*2,true);
-  ctx.fillStyle='#ff6d00';
+  ctx.beginPath();ctx.ellipse(x,cy,rx,ry,0,0,Math.PI*2);
+  ctx.strokeStyle='#ff6d00';ctx.lineWidth=12;
   ctx.shadowColor='rgba(255,150,0,0.4)';ctx.shadowBlur=14;
-  ctx.fill();
+  ctx.stroke();
   ctx.shadowBlur=0;
   ctx.beginPath();ctx.ellipse(x,cy,rx,ry,0,0,Math.PI*2);
   ctx.strokeStyle='rgba(0,0,0,0.4)';ctx.lineWidth=2;
