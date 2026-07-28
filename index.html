@@ -414,8 +414,8 @@ function drawParticles(){
 function spawnHoop(){
   const r=65*scale;
   const ry=r*0.5;
-  const minCy=ry+20,maxCy=canvasH-ry-20;
-  const cy=Math.random()*(maxCy-minCy)+minCy;
+  const range=canvasH*0.35;
+  const cy=canvasH*0.5+(Math.random()-0.5)*range;
   hoops.push({x:canvasW+20,cy,r,ry,scored:false});
 }
 
